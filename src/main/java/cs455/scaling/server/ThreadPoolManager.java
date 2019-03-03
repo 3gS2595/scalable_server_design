@@ -1,21 +1,34 @@
 package cs455.scaling.server;
 
+import cs455.scaling.server.WorkerThread;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 public class ThreadPoolManager {
-    private ConcurrentLinkedQueue queue = new ConcurrentLinkedQueue();
     private int poolSize = 0;
 
-    public ThreadPoolManager(int poolSize){
-        this.poolSize = poolSize;
+    private final int nThreads;
+    private final WorkerThread[] threads;
+    private final LinkedBlockingQueue queue;
 
-        //TODO POPULATE THE CORRECT AMOUNT OF WORKER THREADS
+    public ThreadPoolManager(int nThreads) {
+        this.nThreads = nThreads;
+        queue = new LinkedBlockingQueue();
+        threads = new WorkerThread[nThreads];
+
+        for (int i = 0; i < nThreads; i++) {
+            threads[i] = new WorkerThread();
+            threads[i].start();
+        }
     }
 
-    public void addTask(Task task) {
+    public void execute(Task task) {
+        synchronized (queue) {
+            queue.add(task);
+            queue.notify();
+        }
     }
 
     public String SHA1FromBytes(byte[] data) throws NoSuchAlgorithmException {

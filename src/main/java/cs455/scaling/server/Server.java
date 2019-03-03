@@ -16,13 +16,13 @@ public class Server {
     private String HOST;
     private ThreadPoolManager POOL;
 
-    private Server(String[] args) throws IOException{
+    private Server(String[] args) throws IOException {
         this.PORT = Integer.parseInt(args[0]);
         this.HOST = InetAddress.getLocalHost().getHostName();
         this.POOL = new ThreadPoolManager(Integer.parseInt(args[1]));
     }
 
-    private void run() throws IOException{
+    private void run() throws IOException {
         //opens the selector
         Selector selector = Selector.open();
         //creates the input channel
@@ -33,7 +33,7 @@ public class Server {
         serverSocket.register(selector, SelectionKey.OP_ACCEPT);
 
         //loop on selector
-        while(true){
+        while (true) {
 
             //blocks until there is activity
             selector.select();
@@ -43,11 +43,11 @@ public class Server {
 
             //iterates through collected keys
             Iterator<SelectionKey> iter = selectedKeys.iterator();
-            while(iter.hasNext()){
+            while (iter.hasNext()) {
                 SelectionKey key = iter.next();
 
                 // New connection on SeverSocket
-                if(key.isAcceptable()) {
+                if (key.isAcceptable()) {
                     register(selector, serverSocket);
                 }
 
@@ -62,17 +62,17 @@ public class Server {
         }
     }
 
-    private void register(Selector selector, ServerSocketChannel serverSocket) throws IOException{
+    private void register(Selector selector, ServerSocketChannel serverSocket) throws IOException {
         //intake incoming socket from serverSocket
         SocketChannel client = serverSocket.accept();
 
         //configure new channel and new key for the selector to monitor
         client.configureBlocking(false);
         client.register(selector, SelectionKey.OP_READ);
-        this.POOL.addTask(new Task(client));
+        this.POOL.execute(new Task(client));
     }
 
-    private void readAndRespond(SelectionKey key) throws IOException{
+    private void readAndRespond(SelectionKey key) throws IOException {
         //creates buffer to read into
         ByteBuffer buffer = ByteBuffer.allocate(256);
 
@@ -82,7 +82,7 @@ public class Server {
         //intakes data from socket
         int bytesRead = client.read(buffer);
 
-        if(bytesRead == -1) {
+        if (bytesRead == -1) {
             client.close();
             System.out.println("CLIENT DISCONNECTED");
         } else {
@@ -96,7 +96,7 @@ public class Server {
         }
     }
 
-    public static void main(String[] args) throws IOException  {
+    public static void main(String[] args) throws IOException {
         //creates server object
         Server server = new Server(args);
         server.run();

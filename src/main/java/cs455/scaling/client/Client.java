@@ -24,7 +24,7 @@ public class Client {
 
         buffer = ByteBuffer.wrap("please".getBytes());
         String response = null;
-        try{
+        try {
             client.write(buffer);
             buffer.clear();
             client.read(buffer);
