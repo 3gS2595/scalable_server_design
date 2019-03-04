@@ -1,6 +1,5 @@
 package cs455.scaling.server;
 
-import cs455.scaling.server.WorkerThread;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -9,21 +8,21 @@ import java.util.concurrent.LinkedBlockingQueue;
 public class ThreadPoolManager {
     private int poolSize = 0;
 
-    private final int nThreads;
+    private final int threadCnt;
     private final WorkerThread[] threads;
     public static final LinkedBlockingQueue<Task> queue = new LinkedBlockingQueue<>();
 
-    public ThreadPoolManager(int nThreads) {
-        this.nThreads = nThreads;
-        threads = new WorkerThread[nThreads];
+    public ThreadPoolManager(int threadCnt) {
+        this.threadCnt = threadCnt;
+        threads = new WorkerThread[threadCnt];
 
-        for (int i = 0; i < nThreads; i++) {
+        for (int i = 0; i < threadCnt; i++) {
             threads[i] = new WorkerThread();
             threads[i].start();
         }
     }
 
-    public void execute(Task task) {
+    void execute(Task task) {
         synchronized (queue) {
             queue.add(task);
             queue.notify();

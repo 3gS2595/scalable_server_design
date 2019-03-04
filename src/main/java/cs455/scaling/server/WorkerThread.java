@@ -20,7 +20,6 @@ public class WorkerThread extends Thread {
             // If we don't catch RuntimeException,
             // the pool could leak threads
             try {
-                System.out.println("ITS WORKING");
                 task.run();
             } catch (RuntimeException e) {
                 System.out.println("Thread pool is interrupted due to an issue: " + e.getMessage());

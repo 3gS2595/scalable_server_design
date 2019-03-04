@@ -1,13 +1,15 @@
 package cs455.scaling.server;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Iterator;
 import java.util.Set;
 
@@ -15,11 +17,20 @@ public class Server {
     private int PORT;
     private String HOST;
     private ThreadPoolManager POOL;
+    private int BATCH_SIZE;
+    private int BATCH_TIME;
 
+
+    //constructor
     private Server(String[] args) throws IOException {
+        //network
         this.PORT = Integer.parseInt(args[0]);
         this.HOST = InetAddress.getLocalHost().getHostName();
+
+        //functionality
         this.POOL = new ThreadPoolManager(Integer.parseInt(args[1]));
+        this.BATCH_SIZE = Integer.parseInt(args[2]);
+        this.BATCH_TIME = Integer.parseInt(args[3]);
     }
 
     private void run() throws IOException {
@@ -36,7 +47,7 @@ public class Server {
         while (true) {
 
             //blocks until there is activity
-            selector.selectNow();
+            selector.select();
 
             //collects available keys
             Set<SelectionKey> selectedKeys = selector.selectedKeys();
@@ -64,32 +75,8 @@ public class Server {
         //configure new channel and new key for the selector to monitor
         client.configureBlocking(false);
         client.register(selector, SelectionKey.OP_READ);
-        this.POOL.execute(new Task(client));
+        this.POOL.execute(new Task(client, BATCH_SIZE));
     }
-
-//    private void readAndRespond(SelectionKey key) throws IOException {
-//        //creates buffer to read into
-//        ByteBuffer buffer = ByteBuffer.allocate(256);
-//
-//        //gets socket from key
-//        SocketChannel client = (SocketChannel) key.channel();
-//
-//        //intakes data from socket
-//        int bytesRead = client.read(buffer);
-//
-//        if (bytesRead == -1) {
-//            client.close();
-//            System.out.println("CLIENT DISCONNECTED");
-//        } else {
-//            //returning the message to them
-//            System.out.println("received: " + new String(buffer.array()));
-//            //flip the buffer to now write
-//            buffer.flip();
-//            client.write(buffer);
-//            //clear the buffer
-//            buffer.clear();
-//        }
-//    }
 
     public static void main(String[] args) throws IOException {
         //creates server object
