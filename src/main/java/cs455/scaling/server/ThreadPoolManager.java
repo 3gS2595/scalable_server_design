@@ -11,11 +11,10 @@ public class ThreadPoolManager {
 
     private final int nThreads;
     private final WorkerThread[] threads;
-    private final LinkedBlockingQueue queue;
+    public static final LinkedBlockingQueue<Task> queue = new LinkedBlockingQueue<>();
 
     public ThreadPoolManager(int nThreads) {
         this.nThreads = nThreads;
-        queue = new LinkedBlockingQueue();
         threads = new WorkerThread[nThreads];
 
         for (int i = 0; i < nThreads; i++) {

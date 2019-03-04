@@ -36,7 +36,7 @@ public class Server {
         while (true) {
 
             //blocks until there is activity
-            selector.select();
+            selector.selectNow();
 
             //collects available keys
             Set<SelectionKey> selectedKeys = selector.selectedKeys();
@@ -49,11 +49,6 @@ public class Server {
                 // New connection on SeverSocket
                 if (key.isAcceptable()) {
                     register(selector, serverSocket);
-                }
-
-                // previous connection has data to read
-                if (key.isReadable()) {
-                    readAndRespond(key);
                 }
 
                 //remove it from our set
@@ -72,29 +67,29 @@ public class Server {
         this.POOL.execute(new Task(client));
     }
 
-    private void readAndRespond(SelectionKey key) throws IOException {
-        //creates buffer to read into
-        ByteBuffer buffer = ByteBuffer.allocate(256);
-
-        //gets socket from key
-        SocketChannel client = (SocketChannel) key.channel();
-
-        //intakes data from socket
-        int bytesRead = client.read(buffer);
-
-        if (bytesRead == -1) {
-            client.close();
-            System.out.println("CLIENT DISCONNECTED");
-        } else {
-            //returning the message to them
-            System.out.println("received: " + new String(buffer.array()));
-            //flip the buffer to now write
-            buffer.flip();
-            client.write(buffer);
-            //clear the buffer
-            buffer.clear();
-        }
-    }
+//    private void readAndRespond(SelectionKey key) throws IOException {
+//        //creates buffer to read into
+//        ByteBuffer buffer = ByteBuffer.allocate(256);
+//
+//        //gets socket from key
+//        SocketChannel client = (SocketChannel) key.channel();
+//
+//        //intakes data from socket
+//        int bytesRead = client.read(buffer);
+//
+//        if (bytesRead == -1) {
+//            client.close();
+//            System.out.println("CLIENT DISCONNECTED");
+//        } else {
+//            //returning the message to them
+//            System.out.println("received: " + new String(buffer.array()));
+//            //flip the buffer to now write
+//            buffer.flip();
+//            client.write(buffer);
+//            //clear the buffer
+//            buffer.clear();
+//        }
+//    }
 
     public static void main(String[] args) throws IOException {
         //creates server object
