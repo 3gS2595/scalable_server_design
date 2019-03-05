@@ -9,15 +9,15 @@ public class ThreadPoolManager {
     private int poolSize = 0;
 
     private final int threadCnt;
-    private final WorkerThread[] threads;
-    public static final LinkedBlockingQueue<Task> queue = new LinkedBlockingQueue<>();
+    private final PoolThread[] threads;
+    static final LinkedBlockingQueue<Task> queue = new LinkedBlockingQueue<>();
 
-    public ThreadPoolManager(int threadCnt) {
+    ThreadPoolManager(int threadCnt) {
         this.threadCnt = threadCnt;
-        threads = new WorkerThread[threadCnt];
+        threads = new PoolThread[threadCnt];
 
         for (int i = 0; i < threadCnt; i++) {
-            threads[i] = new WorkerThread();
+            threads[i] = new PoolThread();
             threads[i].start();
         }
     }
@@ -29,10 +29,30 @@ public class ThreadPoolManager {
         }
     }
 
-    public String SHA1FromBytes(byte[] data) throws NoSuchAlgorithmException {
-        MessageDigest digest = MessageDigest.getInstance("SHA1");
-        byte[] hash = digest.digest(data);
-        BigInteger hashInt = new BigInteger(1, hash);
-        return hashInt.toString(16);
+    private class PoolThread extends Thread {
+        public void run() {
+            Runnable task;
+
+            while (true) {
+                synchronized (queue) {
+                    while (queue.isEmpty()) {
+                        try {
+                            queue.wait();
+                        } catch (InterruptedException e) {
+                            System.out.println("An error occurred while queue is waiting: " + e.getMessage());
+                        }
+                    }
+                    task = queue.poll();
+                }
+
+                // If we don't catch RuntimeException,
+                // the pool could leak threads
+                try {
+                    task.run();
+                } catch (RuntimeException e) {
+                    System.out.println("Thread pool is interrupted due to an issue: " + e.getMessage());
+                }
+            }
+        }
     }
 }

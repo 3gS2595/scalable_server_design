@@ -1,5 +1,6 @@
 package cs455.scaling.server;
 
+import java.util.concurrent.locks.Lock;
 
 public class WorkerThread extends Thread {
     public void run() {

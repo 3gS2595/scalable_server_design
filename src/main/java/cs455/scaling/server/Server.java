@@ -1,15 +1,13 @@
 package cs455.scaling.server;
 
 import java.io.IOException;
-import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.ServerSocket;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Iterator;
 import java.util.Set;
 
@@ -19,6 +17,10 @@ public class Server {
     private ThreadPoolManager POOL;
     private int BATCH_SIZE;
     private int BATCH_TIME;
+    private int cnt = 0;
+    private int cnt2 = 0;
+
+
 
 
     //constructor
@@ -47,35 +49,39 @@ public class Server {
         while (true) {
 
             //blocks until there is activity
-            selector.select();
+            selector.selectNow();
 
             //collects available keys
             Set<SelectionKey> selectedKeys = selector.selectedKeys();
-
             //iterates through collected keys
             Iterator<SelectionKey> iter = selectedKeys.iterator();
             while (iter.hasNext()) {
                 SelectionKey key = iter.next();
+                iter.remove();
 
                 // New connection on SeverSocket
-                if (key.isAcceptable()) {
-                    register(selector, serverSocket);
+                if (!key.isValid()) {
+                    continue;
                 }
 
-                //remove it from our set
-                iter.remove();
+                if (key.isValid() && key.isAcceptable()) {
+                    cnt++;
+                    if (cnt == 100){
+                        cnt2+= 100;
+                        cnt = 0;
+                        System.out.println(cnt2);
+                    }
+                    register(serverSocket, selector);
+                }
+
             }
         }
     }
 
-    private void register(Selector selector, ServerSocketChannel serverSocket) throws IOException {
-        //intake incoming socket from serverSocket
-        SocketChannel client = serverSocket.accept();
-
-        //configure new channel and new key for the selector to monitor
-        client.configureBlocking(false);
-        client.register(selector, SelectionKey.OP_READ);
-        this.POOL.execute(new Task(client, BATCH_SIZE));
+    private void register(ServerSocketChannel serverSocket, Selector selector) throws IOException {
+        SocketChannel clientSocket = serverSocket.accept();
+        clientSocket.configureBlocking(false);
+        this.POOL.execute(new Task(clientSocket.register(selector, SelectionKey.OP_READ)));
     }
 
     public static void main(String[] args) throws IOException {

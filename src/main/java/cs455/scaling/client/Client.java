@@ -17,6 +17,7 @@ public class Client {
     private static SocketChannel client;
     private static ByteBuffer buffer;
     private LinkedList<byte[]> sent = new LinkedList<>();
+    private int cnt;
 
     private Client(String[] args){
         this.SERVER_HOST = args[0];
@@ -27,7 +28,7 @@ public class Client {
     private void run() throws InterruptedException{
         while(true) {
             try {
-                //connects to server (arg0=host arg1=port)
+                 //connects to server (arg0=host arg1=port)
                 client = SocketChannel.open(new InetSocketAddress(this.SERVER_HOST, this.SERVER_PORT));
                 //creates buffer
                 buffer = ByteBuffer.allocate(256);
@@ -37,7 +38,7 @@ public class Client {
             byte[] payload = new byte[8];
             new Random().nextBytes(payload);
             buffer = ByteBuffer.wrap(payload);
-            System.out.println(buffer.array());
+            payload = buffer.array();
 
             byte[] response = null;
             try {
@@ -45,7 +46,6 @@ public class Client {
                 buffer.clear();
                 client.read(buffer);
                 response = buffer.array();
-                System.out.println(response);
                 buffer.clear();
             } catch (IOException e) {
                 e.printStackTrace();
@@ -56,11 +56,16 @@ public class Client {
         }
     }
 
-    private String SHA1FromBytes(byte[] data) throws NoSuchAlgorithmException {
-        MessageDigest digest = MessageDigest.getInstance("SHA1");
-        byte[] hash = digest.digest(data);
-        BigInteger hashInt = new BigInteger(1, hash);
-        return hashInt.toString(16);
+    private String SHA1FromBytes(byte[] data) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA1");
+            byte[] hash = digest.digest(data);
+            BigInteger hashInt = new BigInteger(1, hash);
+            return hashInt.toString(16);
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+        return "FUCK";
     }
 
     public static void main(String[] args) throws InterruptedException {
