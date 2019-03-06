@@ -46,9 +46,9 @@ public class Server {
 
             //blocks until there is activity
             selector.selectNow();
-
             //collects available keys
             Set<SelectionKey> selectedKeys = selector.selectedKeys();
+
             //iterates through collected keys
             Iterator<SelectionKey> iter = selectedKeys.iterator();
             while (iter.hasNext()) {
@@ -61,23 +61,23 @@ public class Server {
                 }
 
                 if (key.isValid() && key.isAcceptable()) {
-                    cnt++;
-                    if (cnt == 100){
-                        cnt2+= 100;
-                        cnt = 0;
-                        System.out.println(cnt2);
-                    }
-                    register(serverSocket, selector);
+                    System.out.println("NEW");
+                    this.POOL.add(key);
+                    register(serverSocket, selector, key);
                 }
 
+                if (key.isValid() && key.isReadable()) {
+                    System.out.println("OLD");
+                    this.POOL.add(key);
+                }
             }
         }
     }
 
-    private void register(ServerSocketChannel serverSocket, Selector selector) throws IOException {
+    private void register(ServerSocketChannel serverSocket, Selector selector, SelectionKey key) throws IOException {
         SocketChannel clientSocket = serverSocket.accept();
         clientSocket.configureBlocking(false);
-        this.POOL.execute(new Task(clientSocket.register(selector, SelectionKey.OP_READ)));
+        this.POOL.execute(new Task(key, clientSocket.register(selector, SelectionKey.OP_READ)));
     }
 
     public static void main(String[] args) throws IOException {

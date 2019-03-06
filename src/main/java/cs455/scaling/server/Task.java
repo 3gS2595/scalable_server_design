@@ -9,12 +9,13 @@ public class Task implements Runnable {
     private SelectionKey key;
     private ByteBuffer buffer = ByteBuffer.allocate(8);
     private SocketChannel socketChannel;
-
+    public SelectionKey selectionKey;
 
 
     //constructor
-    Task(SelectionKey key) {
+    Task(SelectionKey selectionKey, SelectionKey key) {
             this.key = key;
+            this.selectionKey = selectionKey;
     }
 
     public void run() {

@@ -2,7 +2,7 @@ package cs455.scaling.server;
 
 public class WorkerThread extends Thread {
     public void run() {
-        Runnable task;
+        Task task;
 
         while (true) {
             synchronized (ThreadPoolManager.queue) {
@@ -16,13 +16,13 @@ public class WorkerThread extends Thread {
                 task = ThreadPoolManager.queue.poll();
             }
 
+            while(true) {
+                if(ThreadPoolManager.batches.get(task.selectionKey) != 1)
+                System.out.println(ThreadPoolManager.batches.get(task.selectionKey));
+            }
             // If we don't catch RuntimeException,
             // the pool could leak threads
-            try {
-                task.run();
-            } catch (RuntimeException e) {
-                System.out.println("Thread pool is interrupted due to an issue: " + e.getMessage());
-            }
+
         }
     }
 }
