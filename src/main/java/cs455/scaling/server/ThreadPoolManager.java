@@ -1,7 +1,5 @@
 package cs455.scaling.server;
 
-import cs455.scaling.hash.Hash;
-
 import java.nio.channels.SelectionKey;
 import java.util.HashMap;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -14,12 +12,12 @@ public class ThreadPoolManager {
     static final LinkedBlockingQueue<Task> queue = new LinkedBlockingQueue<>();
     static final HashMap<SelectionKey, Integer> batches = new HashMap<>();
 
-    ThreadPoolManager(int threadCnt) {
+    ThreadPoolManager(int threadCnt, int batchSize) {
         this.threadCnt = threadCnt;
         threads = new WorkerThread[threadCnt];
 
         for (int i = 0; i < threadCnt; i++) {
-            threads[i] = new WorkerThread();
+            threads[i] = new WorkerThread(batchSize);
             threads[i].start();
         }
     }

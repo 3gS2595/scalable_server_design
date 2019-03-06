@@ -9,16 +9,14 @@ public class Task implements Runnable {
     private SelectionKey key;
     private ByteBuffer buffer = ByteBuffer.allocate(8);
     private SocketChannel socketChannel;
-    public SelectionKey selectionKey;
 
 
     //constructor
-    Task(SelectionKey selectionKey, SelectionKey key) {
-            this.key = key;
-            this.selectionKey = selectionKey;
+    Task( SelectionKey key) {
+        this.key = key;
     }
 
-    public void run() {
+    public ByteBuffer size(){
         try {
             socketChannel = (SocketChannel)key.channel();
             if ( socketChannel.isOpen()) {
@@ -27,26 +25,27 @@ public class Task implements Runnable {
                 while(bytesRead != -1 && buffer.hasRemaining()) {
                     bytesRead = socketChannel.read(buffer);
                 }
-                payload = buffer.array();
-
-
-                if (bytesRead == -1) {
-                    socketChannel.close();
-                    System.out.println("CLIENT DISCONNECTED");
-                } else {
-                    //returning the message to them
-                    //flip the buffer to now write
-
-                    buffer.flip();
-                    socketChannel.write(buffer);
-
-                    //clear the buffer
-                    buffer.clear();
-                }
             }
+            return buffer;
         } catch (IOException e){
             e.printStackTrace();
         }
+        return null;
+    }
+
+    public void run() {
+        //returning the message to them
+        //flip the buffer to now write
+        buffer.flip();
+        try {
+            socketChannel.write(buffer);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        //clear the buffer
+        buffer.clear();
+
 
     }
 }

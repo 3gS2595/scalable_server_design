@@ -26,7 +26,7 @@ public class Server {
         this.HOST = InetAddress.getLocalHost().getHostName();
 
         //functionality
-        this.POOL = new ThreadPoolManager(Integer.parseInt(args[1]));
+        this.POOL = new ThreadPoolManager(Integer.parseInt(args[1]), Integer.parseInt(args[2]));
         this.BATCH_SIZE = Integer.parseInt(args[2]);
         this.BATCH_TIME = Integer.parseInt(args[3]);
     }
@@ -61,23 +61,20 @@ public class Server {
                 }
 
                 if (key.isValid() && key.isAcceptable()) {
-                    System.out.println("NEW");
                     this.POOL.add(key);
-                    register(serverSocket, selector, key);
+                    register(serverSocket, selector);
                 }
 
                 if (key.isValid() && key.isReadable()) {
-                    System.out.println("OLD");
-                    this.POOL.add(key);
                 }
             }
         }
     }
 
-    private void register(ServerSocketChannel serverSocket, Selector selector, SelectionKey key) throws IOException {
+    private void register(ServerSocketChannel serverSocket, Selector selector ) throws IOException {
         SocketChannel clientSocket = serverSocket.accept();
         clientSocket.configureBlocking(false);
-        this.POOL.execute(new Task(key, clientSocket.register(selector, SelectionKey.OP_READ)));
+        this.POOL.execute(new Task( clientSocket.register(selector, SelectionKey.OP_READ)));
     }
 
     public static void main(String[] args) throws IOException {
