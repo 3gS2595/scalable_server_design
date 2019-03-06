@@ -19,9 +19,6 @@ public class Server {
     private int cnt = 0;
     private int cnt2 = 0;
 
-
-
-
     //constructor
     private Server(String[] args) throws IOException {
         //network
