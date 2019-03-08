@@ -6,7 +6,6 @@ import java.net.InetSocketAddress;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
-import java.nio.channels.SocketChannel;
 import java.util.Iterator;
 import java.util.Set;
 
@@ -14,10 +13,8 @@ public class Server {
     private int PORT;
     private String HOST;
     private ThreadPoolManager POOL;
-    private int BATCH_SIZE;
-    private int BATCH_TIME;
-    private int cnt = 0;
-    private int cnt2 = 0;
+    int cnt = 0;
+
 
     //constructor
     private Server(String[] args) throws IOException {
@@ -26,9 +23,10 @@ public class Server {
         this.HOST = InetAddress.getLocalHost().getHostName();
 
         //functionality
-        this.POOL = new ThreadPoolManager(Integer.parseInt(args[1]), Integer.parseInt(args[2]));
-        this.BATCH_SIZE = Integer.parseInt(args[2]);
-        this.BATCH_TIME = Integer.parseInt(args[3]);
+        this.POOL = new ThreadPoolManager(
+            Integer.parseInt(args[1]),
+            Integer.parseInt(args[2]),
+            Integer.parseInt(args[3]));
     }
 
     private void run() throws IOException {
@@ -43,7 +41,6 @@ public class Server {
 
         //loop on selector
         while (true) {
-
             //blocks until there is activity
             selector.selectNow();
             //collects available keys
@@ -53,7 +50,6 @@ public class Server {
             Iterator<SelectionKey> iter = selectedKeys.iterator();
             while (iter.hasNext()) {
                 SelectionKey key = iter.next();
-                iter.remove();
 
                 // New connection on SeverSocket
                 if (!key.isValid()) {
@@ -61,20 +57,23 @@ public class Server {
                 }
 
                 if (key.isValid() && key.isAcceptable()) {
-                    this.POOL.add(key);
-                    register(serverSocket, selector);
+                    register(serverSocket, selector, key);
+                }
+                if (key.isValid() && key.isReadable()) {
+                    register(key);
                 }
 
-                if (key.isValid() && key.isReadable()) {
-                }
+                iter.remove();
             }
         }
     }
 
-    private void register(ServerSocketChannel serverSocket, Selector selector ) throws IOException {
-        SocketChannel clientSocket = serverSocket.accept();
-        clientSocket.configureBlocking(false);
-        this.POOL.execute(new Task( clientSocket.register(selector, SelectionKey.OP_READ)));
+    private void register(SelectionKey key) {
+        this.POOL.createTask(key);
+    }
+
+    private void register(ServerSocketChannel ServerSocketChannel, Selector selector, SelectionKey key) {
+        this.POOL.createTask(ServerSocketChannel, selector, key);
     }
 
     public static void main(String[] args) throws IOException {

@@ -1,18 +1,17 @@
 package cs455.scaling.server;
 
-import java.nio.ByteBuffer;
-
+import java.util.LinkedList;
 
 public class WorkerThread extends Thread {
-    private int batchSize = 0;
+    private int batchSize;
 
-    public WorkerThread(int batchSize) {
+    WorkerThread(int batchSize, int batchTime) {
         this.batchSize = batchSize;
     }
 
     public void run() {
         Task task;
-        ByteBuffer buffer = ByteBuffer.allocate(8*batchSize);
+        LinkedList<byte[]> batch;
         while (true) {
             synchronized (ThreadPoolManager.queue) {
                 while (ThreadPoolManager.queue.isEmpty()) {
@@ -22,20 +21,21 @@ public class WorkerThread extends Thread {
                         System.out.println("An error occurred while queue is waiting: " + e.getMessage());
                     }
                 }
-                //TODO WE NOW HAVE THE NEXT THREAD
-                //TODO WAIT TILL BATCH SIZE
-                //TODO OR WAIT TILL TIME
-                //start building a packet
-                //flush it when reach time or size
                 task = ThreadPoolManager.queue.poll();
+                while (task.get().size() < batchSize - 1){
+                }
+                batch = task.get();
             }
-            int size = 0;
-            while (size/8 <= batchSize) {
-                size += task.size().array().length;
-                System.out.println(size);
-            }
-            size =0;
-            System.out.println("WEMADEIT");
+            task.run();
+            //TODO WE NOW HAVE THE NEXT THREAD
+            //TODO WAIT TILL BATCH SIZE
+            //TODO OR WAIT TILL TIME
+            //start building a packet
+            //flush it when reach time or size
+
+            System.out.println();
+            System.out.println("WEMADEIT " + batch.size());
+            System.out.println();
 
         }
     }

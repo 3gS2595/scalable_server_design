@@ -1,23 +1,20 @@
 package cs455.scaling.client;
 
+import cs455.scaling.hash.Hash;
+
 import java.io.IOException;
-import java.math.BigInteger;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.LinkedList;
 import java.util.Random;
 
 public class Client {
-    private String SERVER_HOST = null;
-    private int SERVER_PORT = 0;
-    private int MESSAGE_RATE = 0;
+    private String SERVER_HOST;
+    private int SERVER_PORT;
+    private int MESSAGE_RATE;
     private static SocketChannel client;
-    private static ByteBuffer buffer;
-    private LinkedList<byte[]> sent = new LinkedList<>();
-    private int cnt;
+    private LinkedList<String> sent = new LinkedList<>();
 
     private Client(String[] args){
         this.SERVER_HOST = args[0];
@@ -25,47 +22,51 @@ public class Client {
         this.MESSAGE_RATE = Integer.parseInt(args[2]);
     }
 
-    private void run() throws InterruptedException{
+    private void run() {
+        ByteBuffer read = ByteBuffer.allocate(256);
+        System.out.println("HEY");
+        try {
+            //connects to server (arg0=host arg1=port)
+            client = SocketChannel.open(new InetSocketAddress(this.SERVER_HOST, this.SERVER_PORT));
+            //creates buffer
+            this.send(client);
+            read = ByteBuffer.allocate(256);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
         while(true) {
             try {
-                 //connects to server (arg0=host arg1=port)
-                client = SocketChannel.open(new InetSocketAddress(this.SERVER_HOST, this.SERVER_PORT));
-                //creates buffer
-                buffer = ByteBuffer.allocate(256);
+                read = ByteBuffer.allocate(256);
+                read.clear();
+                client.read(read);
+                System.out.println(read.array());
+                read.put(new byte[1024]);
+                read.clear();
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            byte[] payload = new byte[8];
-            new Random().nextBytes(payload);
-            buffer = ByteBuffer.wrap(payload);
-            payload = buffer.array();
-
-            byte[] response = null;
-            try {
-                client.write(buffer);
-                buffer.clear();
-                client.read(buffer);
-                response = buffer.array();
-                buffer.clear();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-            //handles sending messages by the desired rate
-            Thread.sleep(1000/ MESSAGE_RATE);
         }
     }
 
-    private String SHA1FromBytes(byte[] data) {
+    private void send(SocketChannel client){
+        ByteBuffer write;
         try {
-            MessageDigest digest = MessageDigest.getInstance("SHA1");
-            byte[] hash = digest.digest(data);
-            BigInteger hashInt = new BigInteger(1, hash);
-            return hashInt.toString(16);
-        } catch (NoSuchAlgorithmException e) {
+            while(true) {
+                byte[] payload = new byte[8];
+                new Random().nextBytes(payload);
+                write = ByteBuffer.wrap(payload);
+                sent.add(Hash.SHA1FromBytes(write.array()));
+                client.write(write);
+                write.clear();
+
+                //handles sending messages by the desired rate
+                Thread.sleep(1000/ MESSAGE_RATE);
+            }
+        } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
-        return "FUCK";
+
     }
 
     public static void main(String[] args) throws InterruptedException {

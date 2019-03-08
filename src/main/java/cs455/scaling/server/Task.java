@@ -1,35 +1,45 @@
 package cs455.scaling.server;
 
+import cs455.scaling.hash.Hash;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
+import java.util.LinkedList;
 
 public class Task implements Runnable {
     private SelectionKey key;
-    private ByteBuffer buffer = ByteBuffer.allocate(8);
+    LinkedList<byte[]> batch;
+    ByteBuffer buffer;
     private SocketChannel socketChannel;
 
-
-    //constructor
-    Task( SelectionKey key) {
+    public Task(SelectionKey key) {
         this.key = key;
+        this.batch = new LinkedList<>();
+        this.buffer  = ByteBuffer.allocate(8);
     }
 
-    public ByteBuffer size(){
+    LinkedList get(){
         try {
-            socketChannel = (SocketChannel)key.channel();
-            if ( socketChannel.isOpen()) {
-                byte[] payload = new byte[8];
-                int bytesRead = socketChannel.read(buffer);
-                while(bytesRead != -1 && buffer.hasRemaining()) {
-                    bytesRead = socketChannel.read(buffer);
+            if(key.isValid()) {
+                socketChannel = (SocketChannel) key.channel();
+                if (socketChannel.isOpen()) {
+                    ByteBuffer load = ByteBuffer.allocate(8);
+                    int read = 0;
+                    while (read != -1 && load.hasRemaining()) {
+                        read = socketChannel.read(load);
+                    }
+                    batch.add(load.array());
+                    System.out.print(Hash.SHA1FromBytes(load.array()));
+
                 }
+                return batch;
             }
-            return buffer;
         } catch (IOException e){
             e.printStackTrace();
         }
+
         return null;
     }
 
@@ -38,15 +48,16 @@ public class Task implements Runnable {
         //flip the buffer to now write
         buffer.flip();
         try {
-            socketChannel.write(buffer);
+            ByteBuffer fullBatch = ByteBuffer.allocate(batch.size()*8);
+            for (byte[] message : batch){
+                fullBatch.put(message);
+            }
+            socketChannel.write(fullBatch);
         } catch (IOException e) {
             e.printStackTrace();
         }
-
         //clear the buffer
         buffer.clear();
-
-
     }
 }
 
