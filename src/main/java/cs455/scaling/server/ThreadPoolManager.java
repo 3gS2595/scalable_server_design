@@ -10,10 +10,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 class ThreadPoolManager {
 
     //Book keeping
-    static final LinkedBlockingQueue<Task> queue;
-    static {
-        queue = new LinkedBlockingQueue<>();
-    }
+    static final LinkedBlockingQueue<Task> queue = new LinkedBlockingQueue<>();
 
     ThreadPoolManager(int THREAD_CNT, int BATCH_SIZE, int BATCH_TIME) {
 

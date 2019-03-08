@@ -52,8 +52,9 @@ public class Task implements Runnable {
             ByteBuffer fullBatch = ByteBuffer.allocate(batch.size() * 8);
             for (byte[] message : batch) {
                 fullBatch.put(message);
+                System.out.println(message);
             }
-            socketChannel.write(fullBatch);
+            socketChannel.write(ByteBuffer.wrap(batch.get(0)));
         } catch (IOException e) {
             e.printStackTrace();
         }

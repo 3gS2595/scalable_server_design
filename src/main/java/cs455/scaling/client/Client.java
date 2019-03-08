@@ -24,22 +24,21 @@ public class Client {
     }
 
     private void run() {
-        ByteBuffer read;
-        System.out.println("HEY");
+        ByteBuffer read = ByteBuffer.allocate(256);
         try {
             //connects to server (arg0=host arg1=port)
             client = SocketChannel.open(new InetSocketAddress(this.SERVER_HOST, this.SERVER_PORT));
             //creates buffer
-            this.send(client);
+            send(client);
         } catch (IOException e) {
             e.printStackTrace();
         }
 
         while(true) {
             try {
-                read = ByteBuffer.allocate(256);
-                read.clear();
+                System.out.println("reading");
                 client.read(read);
+                read.clear();
                 System.out.println(Arrays.toString(read.array()));
                 read.put(new byte[1024]);
                 read.clear();
@@ -61,12 +60,11 @@ public class Client {
                 write.clear();
 
                 //handles sending messages by the desired rate
-                Thread.sleep(1000/ MESSAGE_RATE);
+                Thread.sleep(1000 / MESSAGE_RATE);
             }
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
-
     }
 
     public static void main(String[] args) {
