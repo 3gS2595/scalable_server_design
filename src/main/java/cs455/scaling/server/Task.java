@@ -1,7 +1,5 @@
 package cs455.scaling.server;
 
-import cs455.scaling.hash.Hash;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
@@ -9,20 +7,25 @@ import java.nio.channels.SocketChannel;
 import java.util.LinkedList;
 
 public class Task implements Runnable {
-    private SelectionKey key;
-    LinkedList<byte[]> batch;
-    ByteBuffer buffer;
-    private SocketChannel socketChannel;
 
-    public Task(SelectionKey key) {
+    //Networking
+    private SocketChannel socketChannel;
+    private ByteBuffer buffer;
+    private SelectionKey key;
+
+    //Book keeping
+    private LinkedList<byte[]> batch;
+
+
+    Task(SelectionKey key) {
         this.key = key;
         this.batch = new LinkedList<>();
-        this.buffer  = ByteBuffer.allocate(8);
+        this.buffer = ByteBuffer.allocate(8);
     }
 
-    LinkedList get(){
+    LinkedList get() {
         try {
-            if(key.isValid()) {
+            if (key.isValid()) {
                 socketChannel = (SocketChannel) key.channel();
                 if (socketChannel.isOpen()) {
                     ByteBuffer load = ByteBuffer.allocate(8);
@@ -31,25 +34,23 @@ public class Task implements Runnable {
                         read = socketChannel.read(load);
                     }
                     batch.add(load.array());
-                    System.out.print(Hash.SHA1FromBytes(load.array()));
-
                 }
                 return batch;
             }
-        } catch (IOException e){
+        } catch (IOException e) {
             e.printStackTrace();
         }
-
         return null;
     }
 
     public void run() {
         //returning the message to them
         //flip the buffer to now write
+        System.out.println("Executing (size): " + batch.size());
         buffer.flip();
         try {
-            ByteBuffer fullBatch = ByteBuffer.allocate(batch.size()*8);
-            for (byte[] message : batch){
+            ByteBuffer fullBatch = ByteBuffer.allocate(batch.size() * 8);
+            for (byte[] message : batch) {
                 fullBatch.put(message);
             }
             socketChannel.write(fullBatch);

@@ -8,6 +8,8 @@ import java.nio.channels.SocketChannel;
 import java.util.concurrent.LinkedBlockingQueue;
 
 class ThreadPoolManager {
+
+    //Book keeping
     static final LinkedBlockingQueue<Task> queue = new LinkedBlockingQueue<>();
 
     ThreadPoolManager(int THREAD_CNT, int BATCH_SIZE, int BATCH_TIME) {
@@ -27,6 +29,10 @@ class ThreadPoolManager {
         }
     }
 
+    void createTask(SelectionKey key) {
+        execute(new Task(key));
+    }
+
     void createTask(ServerSocketChannel ServerSocketChannel, Selector selector, SelectionKey key) {
         SelectionKey thisKey = null;
         try {
@@ -37,9 +43,5 @@ class ThreadPoolManager {
             e.printStackTrace();
         }
         execute(new Task(thisKey));
-    }
-
-    public void createTask(SelectionKey key) {
-        execute(new Task(key));
     }
 }

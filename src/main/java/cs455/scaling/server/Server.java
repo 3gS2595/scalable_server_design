@@ -15,7 +15,6 @@ public class Server {
     private ThreadPoolManager POOL;
     int cnt = 0;
 
-
     //constructor
     private Server(String[] args) throws IOException {
         //network

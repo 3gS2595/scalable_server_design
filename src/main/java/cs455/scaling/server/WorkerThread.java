@@ -4,8 +4,10 @@ import java.util.LinkedList;
 
 public class WorkerThread extends Thread {
     private int batchSize;
+    private int batchTime;
 
     WorkerThread(int batchSize, int batchTime) {
+        this.batchTime = batchTime;
         this.batchSize = batchSize;
     }
 
@@ -21,22 +23,20 @@ public class WorkerThread extends Thread {
                         System.out.println("An error occurred while queue is waiting: " + e.getMessage());
                     }
                 }
+                long activatedAt = System.currentTimeMillis() / 1000;
                 task = ThreadPoolManager.queue.poll();
-                while (task.get().size() < batchSize - 1){
+
+                //wait for batchSize or batchTime
+                long activeFor = (System.currentTimeMillis() / 1000) - activatedAt;
+                while ((task.get().size() < batchSize) && activeFor != batchTime) {
+                    activeFor = (System.currentTimeMillis() / 1000) - activatedAt;
                 }
-                batch = task.get();
             }
             task.run();
-            //TODO WE NOW HAVE THE NEXT THREAD
-            //TODO WAIT TILL BATCH SIZE
+
             //TODO OR WAIT TILL TIME
             //start building a packet
             //flush it when reach time or size
-
-            System.out.println();
-            System.out.println("WEMADEIT " + batch.size());
-            System.out.println();
-
         }
     }
 }
