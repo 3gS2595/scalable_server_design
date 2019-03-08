@@ -10,7 +10,10 @@ import java.util.concurrent.LinkedBlockingQueue;
 class ThreadPoolManager {
 
     //Book keeping
-    static final LinkedBlockingQueue<Task> queue = new LinkedBlockingQueue<>();
+    static final LinkedBlockingQueue<Task> queue;
+    static {
+        queue = new LinkedBlockingQueue<>();
+    }
 
     ThreadPoolManager(int THREAD_CNT, int BATCH_SIZE, int BATCH_TIME) {
 
@@ -33,15 +36,14 @@ class ThreadPoolManager {
         execute(new Task(key));
     }
 
-    void createTask(ServerSocketChannel ServerSocketChannel, Selector selector, SelectionKey key) {
-        SelectionKey thisKey = null;
+    void createTask(ServerSocketChannel ServerSocketChannel, Selector selector) {
         try {
             SocketChannel clientSocket = ServerSocketChannel.accept();
             clientSocket.configureBlocking(false);
-            thisKey = clientSocket.register(selector, SelectionKey.OP_READ);
+            SelectionKey thisKey = clientSocket.register(selector, SelectionKey.OP_READ);
+            execute(new Task(thisKey));
         } catch (IOException e) {
             e.printStackTrace();
         }
-        execute(new Task(thisKey));
     }
 }

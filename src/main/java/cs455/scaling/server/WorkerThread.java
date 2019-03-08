@@ -1,7 +1,5 @@
 package cs455.scaling.server;
 
-import java.util.LinkedList;
-
 public class WorkerThread extends Thread {
     private int batchSize;
     private int batchTime;
@@ -13,7 +11,6 @@ public class WorkerThread extends Thread {
 
     public void run() {
         Task task;
-        LinkedList<byte[]> batch;
         while (true) {
             synchronized (ThreadPoolManager.queue) {
                 while (ThreadPoolManager.queue.isEmpty()) {

@@ -13,7 +13,6 @@ public class Server {
     private int PORT;
     private String HOST;
     private ThreadPoolManager POOL;
-    int cnt = 0;
 
     //constructor
     private Server(String[] args) throws IOException {
@@ -55,10 +54,10 @@ public class Server {
                     continue;
                 }
 
-                if (key.isValid() && key.isAcceptable()) {
-                    register(serverSocket, selector, key);
+                if (key.isAcceptable()) {
+                    register(serverSocket, selector);
                 }
-                if (key.isValid() && key.isReadable()) {
+                if (key.isReadable()) {
                     register(key);
                 }
 
@@ -71,8 +70,8 @@ public class Server {
         this.POOL.createTask(key);
     }
 
-    private void register(ServerSocketChannel ServerSocketChannel, Selector selector, SelectionKey key) {
-        this.POOL.createTask(ServerSocketChannel, selector, key);
+    private void register(ServerSocketChannel ServerSocketChannel, Selector selector) {
+        this.POOL.createTask(ServerSocketChannel, selector);
     }
 
     public static void main(String[] args) throws IOException {

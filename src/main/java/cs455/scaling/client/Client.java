@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Random;
 
@@ -23,14 +24,13 @@ public class Client {
     }
 
     private void run() {
-        ByteBuffer read = ByteBuffer.allocate(256);
+        ByteBuffer read;
         System.out.println("HEY");
         try {
             //connects to server (arg0=host arg1=port)
             client = SocketChannel.open(new InetSocketAddress(this.SERVER_HOST, this.SERVER_PORT));
             //creates buffer
             this.send(client);
-            read = ByteBuffer.allocate(256);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -40,7 +40,7 @@ public class Client {
                 read = ByteBuffer.allocate(256);
                 read.clear();
                 client.read(read);
-                System.out.println(read.array());
+                System.out.println(Arrays.toString(read.array()));
                 read.put(new byte[1024]);
                 read.clear();
             } catch (IOException e) {
@@ -69,7 +69,7 @@ public class Client {
 
     }
 
-    public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args) {
         Client thisClient = new Client(args);
         thisClient.run();
     }
