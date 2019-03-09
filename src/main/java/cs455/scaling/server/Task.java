@@ -16,7 +16,6 @@ public class Task implements Runnable {
     //Book keeping
     private LinkedList<byte[]> batch;
 
-
     Task(SelectionKey key) {
         this.key = key;
         this.batch = new LinkedList<>();
@@ -52,7 +51,6 @@ public class Task implements Runnable {
             ByteBuffer fullBatch = ByteBuffer.allocate(batch.size() * 8);
             for (byte[] message : batch) {
                 fullBatch.put(message);
-                System.out.println(message);
             }
             socketChannel.write(ByteBuffer.wrap(batch.get(0)));
         } catch (IOException e) {
