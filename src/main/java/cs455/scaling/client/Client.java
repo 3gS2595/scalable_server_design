@@ -9,6 +9,8 @@ import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.Random;
 import java.util.Set;
@@ -84,7 +86,8 @@ public class Client {
                         //wait for batchSize or batchTime
                         long activeFor = (System.currentTimeMillis() / 1000) - activatedAt;
                         if (activeFor == 20) {
-                            System.out.println("Total Sent Count: " + outCNT + ", Total Received Count: " + inCNT);
+                            String timeStamp = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
+                            System.out.println("[" + timeStamp+ "]" + " Total Sent Count: " + outCNT + ", Total Received Count: " + inCNT);
                             activatedAt = System.currentTimeMillis() / 1000;
                             outCNT = 0;
                             inCNT = 0;

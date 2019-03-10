@@ -1,6 +1,5 @@
 package cs455.scaling.hash;
 
-
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;

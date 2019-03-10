@@ -40,7 +40,7 @@ public class Server {
 
         //loop on selector
         while (true) {
-            System.out.println("start");
+            //System.out.println("start");
             //blocks until there is activity
             selector.selectNow();
             //collects available keys
@@ -65,8 +65,8 @@ public class Server {
 
                 iter.remove();
             }
-            System.out.println("stop");
-            System.out.println();
+            //System.out.println("stop");
+            //System.out.println();
         }
 
     }
