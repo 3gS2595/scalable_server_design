@@ -1,5 +1,6 @@
 package cs455.scaling.hash;
 
+
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -15,6 +16,8 @@ public class Hash {
         }
         byte[] hash = digest.digest(data);
         BigInteger hashInt = new BigInteger(1, hash);
-        return hashInt.toString(16);
+        String res = hashInt.toString(16);
+        String ret = "0000000000000000000000000000000000000000".substring(res.length()) + res;
+        return ret;
     }
 }

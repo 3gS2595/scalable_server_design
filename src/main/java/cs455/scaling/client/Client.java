@@ -9,22 +9,30 @@ import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
-import java.util.*;
+import java.util.LinkedList;
+import java.util.Random;
+import java.util.Set;
 
 public class Client {
-    private String SERVER_HOST;
-    private int SERVER_PORT;
-    private int MESSAGE_RATE;
-    private static ByteBuffer buffer;
-    private SocketChannel socketChannel;
+    //args
+    private final String SERVER_HOST;
+    private final int SERVER_PORT;
+    private final int MESSAGE_RATE;
+
+    //networking
+    private ByteBuffer buffer;
     private Selector selector;
-    private LinkedList<String> sent = new LinkedList<>();
+
+    //book keeping
+    private final LinkedList<String> sent = new LinkedList<>();
+    private int sCNT = 0;
+    private int rCNT = 0;
 
     private Client(String[] args){
         this.SERVER_HOST = args[0];
         this.SERVER_PORT = Integer.parseInt(args[1]);
         this.MESSAGE_RATE = Integer.parseInt(args[2]);
-        buffer = ByteBuffer.allocate(256);
+        buffer = ByteBuffer.allocate(1024);
     }
 
     private void run() {
@@ -32,7 +40,7 @@ public class Client {
             //opens the selector
             //creates the input channel
             selector = Selector.open();
-            socketChannel = SocketChannel.open();
+            SocketChannel socketChannel = SocketChannel.open();
             socketChannel.configureBlocking(false);
             socketChannel.connect(new InetSocketAddress(this.SERVER_HOST, this.SERVER_PORT));
             registerChannel(socketChannel, SelectionKey.OP_CONNECT | SelectionKey.OP_READ);
@@ -41,6 +49,8 @@ public class Client {
             System.out.println("connected");
 
             //operates functions
+            String response = "";
+            long activatedAt = System.currentTimeMillis() / 1000;
             while (true) {
                 //blocks until there is activity
                 selector.selectNow();
@@ -54,19 +64,31 @@ public class Client {
 
                     if (key.isValid()) {
                         if (key.isReadable()) {
-                            System.out.println("reading");
-                            socketChannel.read(buffer);
-                            buffer.clear();
-                            System.out.println(Arrays.toString(buffer.array()));
-                            buffer.clear();
+                            while (response.length() != 40) {
+                                socketChannel.read(buffer);
+                                response += new String(buffer.array());
+                                buffer.clear();
+                            }
+                            checkIfSent(response);
+                            response = "";
                         }
+
                         byte[] payload = new byte[8];
                         new Random().nextBytes(payload);
                         buffer = ByteBuffer.wrap(payload);
                         sent.add(Hash.SHA1FromBytes(buffer.array()));
+                        sCNT++;
                         socketChannel.write(buffer);
                         buffer.clear();
 
+                        //wait for batchSize or batchTime
+                        long activeFor = (System.currentTimeMillis() / 1000) - activatedAt;
+                        if (activeFor == 20) {
+                            System.out.println("Total Sent Count: " + sCNT + ", Total Received Count: " + rCNT);
+                            activatedAt = System.currentTimeMillis() / 1000;
+                            rCNT = 0;
+                            sCNT = 0;
+                        }
                         Thread.sleep(1000 / MESSAGE_RATE);
                     }
                 }
@@ -76,6 +98,14 @@ public class Client {
             e.printStackTrace();
         }
     }
+
+    private void checkIfSent(String response) {
+        if (sent.contains(response)){
+            sent.remove(response);
+            rCNT++;
+        }
+    }
+
     private void confirmConnection(SelectionKey key){
         try {
             if (key.isAcceptable()) {
@@ -93,7 +123,7 @@ public class Client {
     private void registerChannel(SelectableChannel channel, int ops) {
         try {
             channel.configureBlocking(false);
-            SelectionKey key = channel.register(selector, ops);
+            channel.register(selector, ops);
         } catch (IOException e) {
             e.printStackTrace();
         }

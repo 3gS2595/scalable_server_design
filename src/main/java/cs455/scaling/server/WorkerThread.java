@@ -1,8 +1,9 @@
 package cs455.scaling.server;
 
 public class WorkerThread extends Thread {
-    private int batchSize;
-    private int batchTime;
+    private final int batchSize;
+    private final int batchTime;
+    private int processed = 0;
 
     WorkerThread(int batchSize, int batchTime) {
         this.batchTime = batchTime;
@@ -31,9 +32,6 @@ public class WorkerThread extends Thread {
             }
             task.run();
 
-            //TODO OR WAIT TILL TIME
-            //start building a packet
-            //flush it when reach time or size
         }
     }
 }
