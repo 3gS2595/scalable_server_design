@@ -8,14 +8,14 @@ import java.nio.channels.SocketChannel;
 import java.util.concurrent.LinkedBlockingQueue;
 
 class ThreadPoolManager extends Thread{
+    //args[]
+    private final int BATCH_SIZE;
+    private final int BATCH_TIME;
+    private final int THREAD_CNT;
 
     //Book keeping
     static final LinkedBlockingQueue<Task> queue = new LinkedBlockingQueue<>();
-    int BATCH_SIZE;
-    int BATCH_TIME;
-    int THREAD_CNT;
-
-    int cnt = 0;
+    private int cnt = 0;
 
     ThreadPoolManager(int THREAD_CNT, int BATCH_SIZE, int BATCH_TIME) {
         this.BATCH_TIME = BATCH_TIME;

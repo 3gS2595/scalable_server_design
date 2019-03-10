@@ -25,14 +25,14 @@ public class Client {
 
     //book keeping
     private final LinkedList<String> sent = new LinkedList<>();
-    private int sCNT = 0;
-    private int rCNT = 0;
+    private int outCNT = 0;
+    private int inCNT = 0;
 
     private Client(String[] args){
         this.SERVER_HOST = args[0];
         this.SERVER_PORT = Integer.parseInt(args[1]);
         this.MESSAGE_RATE = Integer.parseInt(args[2]);
-        buffer = ByteBuffer.allocate(1024);
+        this.buffer = ByteBuffer.allocate(1024);
     }
 
     private void run() {
@@ -43,7 +43,7 @@ public class Client {
             SocketChannel socketChannel = SocketChannel.open();
             socketChannel.configureBlocking(false);
             socketChannel.connect(new InetSocketAddress(this.SERVER_HOST, this.SERVER_PORT));
-            registerChannel(socketChannel, SelectionKey.OP_CONNECT | SelectionKey.OP_READ);
+            registerChannel(socketChannel);
 
             //connects to server (arg0=host arg1=port)
             System.out.println("connected");
@@ -69,7 +69,7 @@ public class Client {
                                 response += new String(buffer.array());
                                 buffer.clear();
                             }
-                            checkIfSent(response);
+                            checkMatch(response);
                             response = "";
                         }
 
@@ -77,17 +77,17 @@ public class Client {
                         new Random().nextBytes(payload);
                         buffer = ByteBuffer.wrap(payload);
                         sent.add(Hash.SHA1FromBytes(buffer.array()));
-                        sCNT++;
+                        outCNT++;
                         socketChannel.write(buffer);
                         buffer.clear();
 
                         //wait for batchSize or batchTime
                         long activeFor = (System.currentTimeMillis() / 1000) - activatedAt;
                         if (activeFor == 20) {
-                            System.out.println("Total Sent Count: " + sCNT + ", Total Received Count: " + rCNT);
+                            System.out.println("Total Sent Count: " + outCNT + ", Total Received Count: " + inCNT);
                             activatedAt = System.currentTimeMillis() / 1000;
-                            rCNT = 0;
-                            sCNT = 0;
+                            outCNT = 0;
+                            inCNT = 0;
                         }
                         Thread.sleep(1000 / MESSAGE_RATE);
                     }
@@ -99,34 +99,25 @@ public class Client {
         }
     }
 
-    private void checkIfSent(String response) {
+    private void checkMatch(String response) {
         if (sent.contains(response)){
             sent.remove(response);
-            rCNT++;
+            inCNT++;
         }
     }
 
-    private void confirmConnection(SelectionKey key){
-        try {
-            if (key.isAcceptable()) {
-            } else if (key.isConnectable()) {
-                SocketChannel channel = (SocketChannel) key.channel();
-                if (channel.isConnectionPending()) {
-                    channel.finishConnect();
-                }
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
+    private void confirmConnection(SelectionKey key) throws IOException{
+        if (key.isAcceptable()) {
+        } else if (key.isConnectable()) {
+            SocketChannel channel = (SocketChannel) key.channel();
+            if (channel.isConnectionPending())
+                channel.finishConnect();
         }
     }
 
-    private void registerChannel(SelectableChannel channel, int ops) {
-        try {
-            channel.configureBlocking(false);
-            channel.register(selector, ops);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    private void registerChannel(SelectableChannel channel) throws IOException{
+        channel.configureBlocking(false);
+        channel.register(selector, 9);
     }
 
     public static void main(String[] args) {
