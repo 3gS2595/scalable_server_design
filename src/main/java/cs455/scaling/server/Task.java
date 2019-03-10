@@ -1,12 +1,14 @@
 package cs455.scaling.server;
 
+import cs455.scaling.hash.Hash;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 import java.util.LinkedList;
 
-public class Task implements Runnable {
+public class Task implements Runnable{
 
     //Networking
     private SocketChannel socketChannel;
@@ -43,19 +45,17 @@ public class Task implements Runnable {
     }
 
     public void run() {
-        //returning the message to them
-        //flip the buffer to now write
+        //returning the message to client
         System.out.println("Executing (size): " + batch.size());
         buffer.flip();
         try {
-            ByteBuffer fullBatch = ByteBuffer.allocate(batch.size() * 8);
-            for (byte[] message : batch) {
-                fullBatch.put(message);
+            for (byte[] batch1 : batch) {
+                socketChannel.write(ByteBuffer.wrap(Hash.SHA1FromBytes(batch1).getBytes()));
             }
-            socketChannel.write(ByteBuffer.wrap(batch.get(0)));
         } catch (IOException e) {
             e.printStackTrace();
         }
+
         //clear the buffer
         buffer.clear();
     }

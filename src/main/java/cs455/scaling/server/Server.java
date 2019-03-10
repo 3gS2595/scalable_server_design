@@ -25,6 +25,7 @@ public class Server {
             Integer.parseInt(args[1]),
             Integer.parseInt(args[2]),
             Integer.parseInt(args[3]));
+        this.POOL.start();
     }
 
     private void run() throws IOException {
@@ -39,6 +40,7 @@ public class Server {
 
         //loop on selector
         while (true) {
+            System.out.println("start");
             //blocks until there is activity
             selector.selectNow();
             //collects available keys
@@ -63,7 +65,12 @@ public class Server {
 
                 iter.remove();
             }
+            System.out.println("stop");
+            System.out.println();
+
+
         }
+
     }
 
     private void register(SelectionKey key) {
