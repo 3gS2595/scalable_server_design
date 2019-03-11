@@ -24,7 +24,7 @@ class ServerStatistics {
         if(keys.size() != 0) {
 
             double serverThroughput = ThreadPoolManager.processed/20;
-            double clientThroughputMean = (ThreadPoolManager.processed/keys.size())/20;
+            double clientThroughputMean = ((double)ThreadPoolManager.processed/(double)keys.size())/(double)20;
 
             double clientThroughputStdDev = 0;
             double temp = 0;

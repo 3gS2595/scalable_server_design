@@ -53,6 +53,7 @@ public class Client {
             //operates functions
             String response = "";
             long activatedAt = System.currentTimeMillis() / 1000;
+            long activatedAt2 = System.currentTimeMillis() / 1000;
             while (true) {
                 //blocks until there is activity
                 selector.selectNow();
@@ -65,16 +66,6 @@ public class Client {
                     confirmConnection(key);
 
                     if (key.isValid()) {
-                        if (key.isReadable()) {
-                            while (response.length() != 40) {
-                                socketChannel.read(buffer);
-                                response += new String(buffer.array());
-                                buffer.clear();
-                            }
-                            checkMatch(response);
-                            response = "";
-                        }
-
                         byte[] payload = new byte[8];
                         new Random().nextBytes(payload);
                         buffer = ByteBuffer.wrap(payload);
@@ -92,6 +83,16 @@ public class Client {
                             outCNT = 0;
                             inCNT = 0;
                         }
+
+                        if (key.isReadable()) {
+                            while (response.length() != 40) {
+                                socketChannel.read(buffer);
+                                response += new String(buffer.array());
+                                buffer.clear();
+                            }
+                            checkMatch(response);
+                            response = "";
+                        }
                         Thread.sleep(1000 / MESSAGE_RATE);
                     }
                 }
@@ -103,7 +104,7 @@ public class Client {
     }
 
     private void checkMatch(String response) {
-        if (sent.contains(response)){
+        if (sent.contains(response)) {
             sent.remove(response);
             inCNT++;
         }

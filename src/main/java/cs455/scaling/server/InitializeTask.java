@@ -28,7 +28,6 @@ public class InitializeTask implements Task {
     public void run(){
         ThreadPoolManager.createTask(thisKey);
         ThreadPoolManager.keys.add(thisKey);
-        System.out.println("4");
     }
 
     @Override
