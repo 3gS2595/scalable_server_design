@@ -1,12 +1,8 @@
 package cs455.scaling.server;
 
 public class WorkerThread extends Thread {
-    private final int batchSize;
-    private final int batchTime;
 
-    WorkerThread(int batchSize, int batchTime) {
-        this.batchTime = batchTime;
-        this.batchSize = batchSize;
+    WorkerThread() {
     }
 
     public void run() {

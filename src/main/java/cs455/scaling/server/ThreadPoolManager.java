@@ -1,10 +1,8 @@
 package cs455.scaling.server;
 
-import java.io.IOException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
-import java.nio.channels.SocketChannel;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -18,12 +16,12 @@ class ThreadPoolManager extends Thread{
     private static int THREAD_CNT;
 
     //Book keeping
-    private static final LinkedBlockingQueue<SelectionKey> keys = new LinkedBlockingQueue<>();
+    static LinkedBlockingQueue<SelectionKey> keys = new LinkedBlockingQueue<>();
+    private static final LinkedList<Task>  priority = new LinkedList<>();
     private static final LinkedBlockingQueue<Task> queue = new LinkedBlockingQueue<>();
-    private int processed;
-    private long activatedAt = System.currentTimeMillis() / 1000;
 
-    private static DecimalFormat df2 = new DecimalFormat(".##");
+    static int processed;
+    private long activatedAt = System.currentTimeMillis() / 1000;
 
     ThreadPoolManager(int THREAD_CNT, int BATCH_SIZE, int BATCH_TIME) {
         ThreadPoolManager.BATCH_TIME = BATCH_TIME;
@@ -36,7 +34,7 @@ class ThreadPoolManager extends Thread{
         //initializes workerThreads
         WorkerThread[] threads = new WorkerThread[THREAD_CNT];
         for (int i = 0; i < THREAD_CNT; i++) {
-            threads[i] = new WorkerThread(BATCH_SIZE, BATCH_TIME);
+            threads[i] = new WorkerThread();
             threads[i].start();
         }
 
@@ -46,78 +44,52 @@ class ThreadPoolManager extends Thread{
             long activeFor = (System.currentTimeMillis() / 1000) - activatedAt;
             if (activeFor == 20) {
                 activatedAt = System.currentTimeMillis() / 1000;
-
-                LinkedList<Integer> values = new LinkedList<>();
-                for(SelectionKey i : keys){
-                    ServerStatistics temp = (ServerStatistics) i.attachment();
-                    values.add(temp.get());
-                    processed+=(temp.get());
-                    i.attach(new ServerStatistics());
-                }
-                double serverThroughput = processed/20;
-                double clientThroughputMean = (processed/keys.size())/20;
-
-                double clientThroughputStdDev = 0;
-                double temp = 0;
-                for(int a : values)
-                    temp += ((a/20)-clientThroughputMean)*((a/20)-clientThroughputMean);
-                clientThroughputStdDev = Math.sqrt(temp/(keys.size()-1));
-
-                processed = (0);
-
-                String timeStamp = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
-                System.out.println("[" + timeStamp + "]"
-                    + " Server Throughput: " + df2.format(serverThroughput)  + " message(s),"
-                    + " Active Client Connections: " + keys.size()
-                    + ", Mean Per-client Throughput: " + df2.format(clientThroughputMean) + " message(s)"
-                    + ", Std. Dev. Of Per-client Throughput: " + df2.format(clientThroughputStdDev));
-
+                ServerStatistics.print(keys);
             }
         }
     }
 
-    private void execute(Task task) {
+    static void execute(Task task) {
         synchronized (queue) {
-            queue.add(task);
+                queue.add(task);
             queue.notify();
         }
     }
 
     static Task get(){
         Task task;
-        synchronized (ThreadPoolManager.queue) {
-            while (ThreadPoolManager.queue.isEmpty()) {
-                try {
-                    ThreadPoolManager.queue.wait();
-                } catch (InterruptedException e) { e.printStackTrace(); }
-            }
-            long activatedAt = System.currentTimeMillis() / 1000;
-            task = ThreadPoolManager.queue.poll();
-
-
-            //wait for batchSize or batchTime
-            long activeFor = (System.currentTimeMillis() / 1000) - activatedAt;
-            while ((task.get().size() < BATCH_SIZE) && activeFor != BATCH_TIME) {
-                activeFor = (System.currentTimeMillis() / 1000) - activatedAt;
-            }
+        if ( priority.size() != 0){
+            System.out.println(priority.size() + "SIZE");
+            return priority.poll();
         }
+            synchronized (ThreadPoolManager.queue) {
+                while (ThreadPoolManager.queue.isEmpty()) {
+                    try {
+                        ThreadPoolManager.queue.wait();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+                long activatedAt = System.currentTimeMillis() / 1000;
+                task = ThreadPoolManager.queue.poll();
+                if(task.getType() == 1 ){
+                    return task;
+                }
+                //wait for batchSize or batchTime
+                long activeFor = (System.currentTimeMillis() / 1000) - activatedAt;
+                while ((((BatchTask) task).get().size() < BATCH_SIZE) && activeFor != BATCH_TIME) {
+                    activeFor = (System.currentTimeMillis() / 1000) - activatedAt;
+                }
+            }
         return task;
+
     }
 
-    void createTask(SelectionKey key) {
-        execute(new Task(key));
+    static void createTask(SelectionKey key) {
+        execute(new BatchTask(key));
     }
 
     void createTask(ServerSocketChannel ServerSocketChannel, Selector selector) {
-        try {
-            SocketChannel clientSocket = ServerSocketChannel.accept();
-            clientSocket.configureBlocking(false);
-            SelectionKey thisKey = clientSocket.register(selector, SelectionKey.OP_READ);
-            thisKey.attach(new ServerStatistics());
-            execute(new Task(thisKey));
-
-            keys.add(thisKey);
-
-        } catch (IOException e) { e.printStackTrace(); }
+        execute(new InitializeTask(ServerSocketChannel, selector));
     }
 }
