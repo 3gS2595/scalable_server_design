@@ -3,9 +3,6 @@ package cs455.scaling.server;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
-import java.text.DecimalFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.LinkedList;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -19,7 +16,6 @@ class ThreadPoolManager extends Thread{
     static LinkedBlockingQueue<SelectionKey> keys = new LinkedBlockingQueue<>();
     private static final LinkedList<Task>  priority = new LinkedList<>();
     private static final LinkedBlockingQueue<Task> queue = new LinkedBlockingQueue<>();
-
     static int processed;
     private long activatedAt = System.currentTimeMillis() / 1000;
 
@@ -49,7 +45,7 @@ class ThreadPoolManager extends Thread{
         }
     }
 
-    static void execute(Task task) {
+    private static void execute(Task task) {
         synchronized (queue) {
                 queue.add(task);
             queue.notify();
@@ -70,14 +66,16 @@ class ThreadPoolManager extends Thread{
                         e.printStackTrace();
                     }
                 }
+                //begins counting to batch time after popping top node
                 long activatedAt = System.currentTimeMillis() / 1000;
                 task = ThreadPoolManager.queue.poll();
+                assert task != null;
                 if(task.getType() == 1 ){
                     return task;
                 }
                 //wait for batchSize or batchTime
                 long activeFor = (System.currentTimeMillis() / 1000) - activatedAt;
-                while ((((BatchTask) task).get().size() < BATCH_SIZE) && activeFor != BATCH_TIME) {
+                while ((((BatchTask) task).get().size() < BATCH_SIZE) && (activeFor != BATCH_TIME)) {
                     activeFor = (System.currentTimeMillis() / 1000) - activatedAt;
                 }
             }

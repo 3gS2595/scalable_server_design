@@ -7,16 +7,13 @@ import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 
 public class InitializeTask implements Task {
-    ServerSocketChannel serverSocketChannel;
-    Selector selector;
-    SocketChannel clientSocket;
-    SelectionKey thisKey;
+
+    //networking
+    private SelectionKey thisKey;
 
     InitializeTask(ServerSocketChannel serverSocketChannel, Selector selector){
-        this.serverSocketChannel = serverSocketChannel;
-        this.selector = selector;
         try {
-            clientSocket = serverSocketChannel.accept();
+            SocketChannel clientSocket = serverSocketChannel.accept();
                 clientSocket.configureBlocking(false);
                 this.thisKey = clientSocket.register(selector, SelectionKey.OP_READ);
                 this.thisKey.attach(new ServerStatistics());

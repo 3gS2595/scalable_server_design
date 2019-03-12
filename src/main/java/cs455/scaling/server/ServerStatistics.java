@@ -8,10 +8,9 @@ import java.util.LinkedList;
 import java.util.concurrent.LinkedBlockingQueue;
 
 class ServerStatistics {
-    int processed = 0;
 
-    private static DecimalFormat df2 = new DecimalFormat(".##");
-
+    //Book Keeping
+    private int processed = 0;
 
     static void print(LinkedBlockingQueue<SelectionKey> keys){
         LinkedList<Integer> values = new LinkedList<>();
@@ -21,26 +20,30 @@ class ServerStatistics {
             ThreadPoolManager.processed+=(temp.get());
             i.attach(new ServerStatistics());
         }
-        if(keys.size() != 0) {
 
-            double serverThroughput = ThreadPoolManager.processed/20;
-            double clientThroughputMean = ((double)ThreadPoolManager.processed/(double)keys.size())/(double)20;
+        double serverThroughput = (double)ThreadPoolManager.processed/20;
+        double clientThroughputMean = ((double)ThreadPoolManager.processed/(double)keys.size())/(double)20;
 
-            double clientThroughputStdDev = 0;
-            double temp = 0;
-            for(int a : values)
-                temp += ((a/20)-clientThroughputMean)*((a/20)-clientThroughputMean);
-            clientThroughputStdDev = Math.sqrt(temp / (keys.size() - 1));
+        double clientThroughputStdDev;
+        double temp = 0;
+        for(int a : values)
+            temp += (((double)a/20)-clientThroughputMean)*(((double)a/20)-clientThroughputMean);
+        clientThroughputStdDev = Math.sqrt(temp / (keys.size() - 1));
 
-            ThreadPoolManager.processed = (0);
+        ThreadPoolManager.processed = (0);
 
-            String timeStamp = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
-            System.out.println("[" + timeStamp + "]"
-                + " Server Throughput: " + df2.format(serverThroughput) + " message(s),"
-                + " Active Client Connections: " + keys.size()
-                + ", Mean Per-client Throughput: " + df2.format(clientThroughputMean) + " message(s)"
-                + ", Std. Dev. Of Per-client Throughput: " + df2.format(clientThroughputStdDev));
+        if(keys.size() == 1) {
+            clientThroughputStdDev = 0;
         }
+
+        //final statement creation
+        DecimalFormat df2 = new DecimalFormat("#.##");
+        String timeStamp = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
+        System.out.println("[" + timeStamp + "]"
+            + " Server Throughput: " + df2.format(serverThroughput) + " message(s),"
+            + " Active Client Connections: " + keys.size()
+            + ", Mean Per-client Throughput: " + df2.format(clientThroughputMean) + " message(s)"
+            + ", Std. Dev. Of Per-client Throughput: " + df2.format(clientThroughputStdDev));
     }
 
     ServerStatistics(){
@@ -50,7 +53,5 @@ class ServerStatistics {
         processed+= i;
     }
 
-    int get (){
-        return processed;
-    }
+    private int get(){ return processed; }
 }

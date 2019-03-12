@@ -10,13 +10,14 @@ public class Hash {
         try {
             digest = MessageDigest.getInstance("SHA1");
         } catch (NoSuchAlgorithmException e){
-            System.out.println("Could not find algorithm SHA1: " + e);
+            e.printStackTrace();
             return null;
         }
+
         byte[] hash = digest.digest(data);
         BigInteger hashInt = new BigInteger(1, hash);
         String res = hashInt.toString(16);
-        String ret = "0000000000000000000000000000000000000000".substring(res.length()) + res;
-        return ret;
+        String s = "0000000000000000000000000000000000000000".substring(res.length()) + res;
+        return s;
     }
 }

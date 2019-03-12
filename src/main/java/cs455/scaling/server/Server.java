@@ -72,7 +72,7 @@ public class Server {
     }
 
     private void register(SelectionKey key) {
-        this.POOL.createTask(key);
+        ThreadPoolManager.createTask(key);
     }
 
     private void register(ServerSocketChannel ServerSocketChannel, Selector selector) {

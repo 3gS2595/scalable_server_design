@@ -24,11 +24,12 @@ public class Client {
     //networking
     private ByteBuffer buffer;
     private Selector selector;
+    private SocketChannel socketChannel;
 
     //book keeping
     private final LinkedList<String> sent = new LinkedList<>();
-    private int outCNT = 0;
-    private int inCNT = 0;
+    private int sentCnt = 0;
+    private int receivedCnt = 0;
 
     private Client(String[] args){
         this.SERVER_HOST = args[0];
@@ -41,19 +42,11 @@ public class Client {
         try {
             //opens the selector
             //creates the input channel
-            selector = Selector.open();
-            SocketChannel socketChannel = SocketChannel.open();
-            socketChannel.configureBlocking(false);
-            socketChannel.connect(new InetSocketAddress(this.SERVER_HOST, this.SERVER_PORT));
-            registerChannel(socketChannel);
-
-            //connects to server (arg0=host arg1=port)
-            System.out.println("connected");
+            this.createConnection();
 
             //operates functions
-            String response = "";
+            StringBuilder response = new StringBuilder();
             long activatedAt = System.currentTimeMillis() / 1000;
-            long activatedAt2 = System.currentTimeMillis() / 1000;
             while (true) {
                 //blocks until there is activity
                 selector.selectNow();
@@ -66,62 +59,72 @@ public class Client {
                     confirmConnection(key);
 
                     if (key.isValid()) {
+                        //writes data
                         byte[] payload = new byte[8];
                         new Random().nextBytes(payload);
                         buffer = ByteBuffer.wrap(payload);
                         sent.add(Hash.SHA1FromBytes(buffer.array()));
-                        outCNT++;
+                        sentCnt++;
                         socketChannel.write(buffer);
                         buffer.clear();
 
-                        //wait for batchSize or batchTime
+                        //prints out info every 20s
                         long activeFor = (System.currentTimeMillis() / 1000) - activatedAt;
                         if (activeFor == 20) {
                             String timeStamp = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
-                            System.out.println("[" + timeStamp+ "]" + " Total Sent Count: " + outCNT + ", Total Received Count: " + inCNT);
+                            System.out.println("[" + timeStamp+ "]" + " Total Sent Count: " + sentCnt + ", Total Received Count: " + receivedCnt);
                             activatedAt = System.currentTimeMillis() / 1000;
-                            outCNT = 0;
-                            inCNT = 0;
+                            sentCnt = 0;
+                            receivedCnt = 0;
                         }
 
+                        //reads data when applicable
                         if (key.isReadable()) {
                             while (response.length() != 40) {
                                 socketChannel.read(buffer);
-                                response += new String(buffer.array());
+                                response.append(new String(buffer.array()));
                                 buffer.clear();
                             }
-                            checkMatch(response);
-                            response = "";
+                            checkMatch(response.toString());
+                            response = new StringBuilder();
                         }
                         Thread.sleep(1000 / MESSAGE_RATE);
                     }
                 }
             }
-
-        } catch (InterruptedException | IOException e) {
-            e.printStackTrace();
-        }
+        } catch (InterruptedException | IOException e) { e.printStackTrace(); }
     }
 
     private void checkMatch(String response) {
         if (sent.contains(response)) {
             sent.remove(response);
-            inCNT++;
+            receivedCnt++;
         }
     }
 
+    //opens selector and creates input channel
+    private void createConnection() throws IOException{
+        selector = Selector.open();
+        socketChannel = SocketChannel.open();
+        socketChannel.configureBlocking(false);
+        socketChannel.connect(new InetSocketAddress(this.SERVER_HOST, this.SERVER_PORT));
+        registerChannel(socketChannel);
+    }
+
+    //confirms connection, completes if pending
     private void confirmConnection(SelectionKey key) throws IOException{
-        if (key.isAcceptable()) {
-        } else if (key.isConnectable()) {
-            SocketChannel channel = (SocketChannel) key.channel();
-            if (channel.isConnectionPending())
-                channel.finishConnect();
+        if (!key.isAcceptable()) {
+            if (key.isConnectable()) {
+                SocketChannel channel = (SocketChannel) key.channel();
+                if (channel.isConnectionPending())
+                    channel.finishConnect();
+            }
         }
     }
 
     private void registerChannel(SelectableChannel channel) throws IOException{
         channel.configureBlocking(false);
-        channel.register(selector, 9);
+        channel.register(selector, SelectionKey.OP_READ | SelectionKey.OP_CONNECT);
     }
 
     public static void main(String[] args) {

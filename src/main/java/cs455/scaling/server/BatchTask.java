@@ -62,6 +62,8 @@ public class BatchTask implements Task{
             }
         } catch (IOException e) { e.printStackTrace(); }
 
+        if (batch.size() >= 25)
+            System.out.println(batch.size());
         //clear the buffer
         buffer.clear();
     }
